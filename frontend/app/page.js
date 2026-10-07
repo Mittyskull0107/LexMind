@@ -1,51 +1,83 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { createClient } from "../lib/supabase/client";
 
 export default function Home() {
-  const [backendStatus, setBackendStatus] = useState("Checking...");
+  const router = useRouter();
+
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function checkBackendHealth() {
-      try {
-        const response = await fetch("http://localhost:8000/api/health");
+    async function loadUser() {
+      const supabase = createClient();
 
-        if (!response.ok) {
-          throw new Error("Backend request failed");
-        }
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-        const data = await response.json();
-        setBackendStatus(data.status || "Backend unavailable");
-      } catch {
-        setBackendStatus("Backend unavailable");
+      if (!user) {
+        router.push("/login");
+        return;
       }
+
+      setUser(user);
+      setLoading(false);
     }
 
-    checkBackendHealth();
-  }, []);
+    loadUser();
+  }, [router]);
+
+  async function handleLogout() {
+    const supabase = createClient();
+
+    await supabase.auth.signOut();
+
+    router.push("/login");
+    router.refresh();
+  }
+
+  if (loading) {
+    return (
+      <main
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <p>Loading LexMind...</p>
+      </main>
+    );
+  }
 
   return (
-    <main
-      data-testid="lexmind-homepage"
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "24px",
-        textAlign: "center",
-      }}
-    >
-      <h1 data-testid="lexmind-title">LexMind</h1>
+    <main style={{ padding: "40px" }}>
+      <h1>LexMind</h1>
 
-      <p data-testid="lexmind-description">
-        AI-powered legal case memory assistant
-      </p>
+      <p>Intelligence that remembers the case.</p>
 
-      <p data-testid="backend-status">
-        Backend status: {backendStatus}
-      </p>
+      <div style={{ marginTop: "30px" }}>
+        <p>
+          Signed in as: <strong>{user.email}</strong>
+        </p>
+
+        <button
+          onClick={handleLogout}
+          style={{
+            marginTop: "15px",
+            padding: "10px 16px",
+            cursor: "pointer",
+          }}
+        >
+          Sign out
+        </button>
+      </div>
     </main>
   );
 }
+

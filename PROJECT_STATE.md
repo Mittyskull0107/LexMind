@@ -32,4 +32,4 @@ M2 — Case Management + PostgreSQL
 2. Frontend never directly accesses Hindsight.
 3. API keys remain on the backend.
 4. Each case will eventually have isolated memory.
-5. Security and authorization must be enforced by the backend.
+5. Security and authorization must be enforced by the backend.\q
